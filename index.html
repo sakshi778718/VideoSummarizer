@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Summarizer Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans">
+
+    <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur py-4 px-6">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-tight text-indigo-400">SummAI<span class="text-white">.yt</span></h1>
+            <span class="text-xs bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-1 rounded-full font-medium">Developer Portfolio Instance</span>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-4xl w-full mx-auto p-6 md:py-12">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl mb-2">Extract Insights Instantly</h2>
+            <p class="text-slate-400 text-base max-w-md mx-auto">Drop any YouTube video link below to parse transcripts and generate timestamped intelligence matrices.</p>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-xl mb-8">
+            <form id="summarizeForm" class="flex flex-col sm:flex-row gap-3">
+                <input 
+                    type="url" 
+                    id="videoUrl" 
+                    required
+                    placeholder="Enter valid YouTube Video URL (e.g., https://www.youtube.com/watch?v=...)" 
+                    class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                />
+                <button 
+                    type="submit" 
+                    id="submitBtn"
+                    class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-medium px-6 py-3 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2 whitespace-nowrap"
+                >
+                    Generate Summary
+                </button>
+            </form>
+        </div>
+
+        <div id="loading" class="hidden text-center py-12">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500 mx-auto mb-4"></div>
+            <p class="text-slate-400 text-sm animate-pulse">Running data pipeline: Compiling transcript sequences & running synthesis models...</p>
+        </div>
+
+        <div id="errorBox" class="hidden bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-8 text-sm"></div>
+
+        <div id="outputContainer" class="hidden bg-slate-900 border border-slate-800 rounded-xl shadow-xl overflow-hidden">
+            <div class="border-b border-slate-800 bg-slate-900/80 px-6 py-4 flex justify-between items-center">
+                <h3 class="font-semibold text-slate-200">AI Synthesized Report</h3>
+                <span id="videoIdBadge" class="text-xs font-mono bg-slate-800 text-slate-400 px-2 py-1 rounded">ID: --</span>
+            </div>
+            
+            <div id="summaryContent" class="prose prose-invert max-w-none p-6 md:p-8 text-slate-300 space-y-4 leading-relaxed tracking-normal">
+                </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('summarizeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const videoUrl = document.getElementById('videoUrl').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const errorBox = document.getElementById('errorBox');
+            const outputContainer = document.getElementById('outputContainer');
+            const summaryContent = document.getElementById('summaryContent');
+            const videoIdBadge = document.getElementById('videoIdBadge');
+
+            // Set UI to running/loading context state
+            errorBox.classList.add('hidden');
+            outputContainer.classList.add('hidden');
+            loading.classList.remove('hidden');
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/v1/summarize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: videoUrl })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.detail || 'An unexpected pipeline error occurred during execution.');
+                }
+
+                // Inject compiled Markdown directly into UI dashboard layout via marked compiler
+                videoIdBadge.innerText = `ID: ${result.video_id}`;
+                summaryContent.innerHTML = marked.parse(result.data.summary);
+                outputContainer.classList.remove('hidden');
+
+            } catch (err) {
+                errorBox.innerText = err.message;
+                errorBox.classList.remove('hidden');
+            } finally {
+                loading.classList.add('hidden');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+    </script>
+</body>
+</html>
