@@ -55,11 +55,14 @@
             </div>
             
             <div id="summaryContent" class="prose prose-invert max-w-none p-6 md:p-8 text-slate-300 space-y-4 leading-relaxed tracking-normal">
-                </div>
+            </div>
         </div>
     </main>
 
     <script>
+        // REPLACE THIS URL WITH YOUR LIVE RENDER BACKEND WEB SERVICE URL ONCE DEPLOYED
+        const BACKEND_API_URL = "https://YOUR-RENDER-BACKEND-NAME.onrender.com/api/v1/summarize";
+
         document.getElementById('summarizeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -79,7 +82,7 @@
             submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
 
             try {
-                const response = await fetch('http://127.0.0.1:8000/api/v1/summarize', {
+                const response = await fetch(BACKEND_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -110,3 +113,4 @@
     </script>
 </body>
 </html>
+              
