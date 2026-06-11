@@ -1,11 +1,16 @@
-import os
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from dotenv import load_dotenv
+import os
+
+# Import your custom service class from services.py
 from services import YouTubeLLMService
 
-load_dotenv()
+# Define the expected structure from your frontend
+class SummarizeRequest(BaseModel):
+    video_url: str
 
 app = FastAPI(
     title="VideoIntelligenceAPI",
@@ -13,40 +18,73 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Essential CORS configurations to allow the local front-end client to securely invoke endpoints
+# 1. ALLOW CORS (Cross-Origin Resource Sharing)
+# Keeps your deployment safe from cross-origin browser blocking
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-class SummarizeRequest(BaseModel):
-    url: str
+# Fetch the OpenAI API key from Render's environment variables
+OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 
-# Dependency Injection pattern for modular, decoupled testing
-def get_llm_service():
-    return YouTubeLLMService(api_key=os.getenv("OPENAI_API_KEY"))
+# 2. INTEGRATED BACKEND ENDPOINT
+@app.post("/api/v1/summarize")
+async def summarize_video(payload: SummarizeRequest):
+    try:
+        url = payload.video_url
+        if not url:
+            raise HTTPException(status_code=400, detail="Please provide a valid YouTube URL.")
+        
+        if not OPENAI_KEY:
+            raise HTTPException(
+                status_code=500, 
+                detail="OpenAI API Key is missing on the server configuration. Please check Render Environment Variables."
+            )
 
-@app.post("/api/v1/summarize", status_code=200)
-async def summarize_endpoint(payload: SummarizeRequest, service: YouTubeLLMService = Depends(get_llm_service)):
-    """
-    Ingests a YouTube URL, processes the transcript stream asynchronously, 
-    and pipes data through OpenAI to build structured, timestamped markdown summaries.
-    """
-    video_id = service.extract_video_id(payload.url)
-    transcript_data = service.get_formatted_transcript(video_id)
-    summary_markdown = service.generate_summary(transcript_data)
-    
-    return {
-        "status": "success",
-        "video_id": video_id,
-        "data": {
-            "summary": summary_markdown
+        # Initialize your YouTubeLLMService with the active key
+        yt_service = YouTubeLLMService(api_key=OPENAI_KEY)
+        
+        # Step 1: Extract Video ID using your custom staticmethod logic
+        video_id = yt_service.extract_video_id(url)
+        
+        # Step 2: Fetch the transcript and pass it to your LLM summarizing function
+        # (Assuming your method name below matches what you built further down in services.py)
+        transcript = yt_service.get_formatted_transcript(video_id)
+        
+        # Step 3: Generate the summary using your service instance
+        # Replace 'generate_summary_from_transcript' with your actual method name if it's different!
+        summary_output = yt_service.generate_summary_from_transcript(transcript)
+        
+        return {
+            "status": "success",
+            "message": "Summary generated successfully.",
+            "summary": summary_output
         }
-    }
+        
+    except HTTPException as http_err:
+        # Pass through the HTTPExceptions handled directly inside your services.py methods
+        raise http_err
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+
+# 3. MOUNT FRONTEND DIRECTORY AND SERVE INDEX.HTML AT THE ROOT (/)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+
+if os.path.exists(FRONTEND_DIR):
+    app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR), name="frontend")
+
+@app.get("/")
+async def serve_frontend():
+    index_path = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {
+        "error": "Backend running, but frontend/index.html was not found.",
+        "resolved_path": index_path
+    }
