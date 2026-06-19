@@ -1,6 +1,6 @@
 import re
 from fastapi import HTTPException
-import youtube_transcript_api
+from youtube_transcript_api import YouTubeTranscriptApi
 from openai import OpenAI
 
 class YouTubeLLMService:
@@ -26,15 +26,11 @@ class YouTubeLLMService:
         return f"{mins:02d}:{secs:02d}"
 
     def get_formatted_transcript(self, video_id: str) -> str:
-        """Fetches and builds a clean, timestamp-chunked layout of the video transcript."""
+        """Fetches and builds a clean, timestamp-chunked layout of the video transcript using contemporary library methods."""
         try:
-            # Safer wrapper call pattern to avoid naming/class level conflicts
-            if hasattr(youtube_transcript_api, 'YouTubeTranscriptApi'):
-                api_instance = youtube_transcript_api.YouTubeTranscriptApi
-            else:
-                api_instance = youtube_transcript_api
-
-            transcript_list = api_instance.get_transcript(video_id)
+            # Instantiate the class and fetch the transcript to handle modern versions smoothly
+            api_instance = YouTubeTranscriptApi()
+            transcript_list = api_instance.fetch(video_id)
             
             formatted_segments = []
             chunk_text = []
@@ -60,7 +56,7 @@ class YouTubeLLMService:
         except Exception as e:
             raise HTTPException(
                 status_code=422, 
-                detail=f"Could not retrieve transcript. Captions may be disabled, or the library encountered an unexpected error: {str(e)}"
+                detail=f"Could not retrieve transcript. Captions may be disabled on this video. Error: {str(e)}"
             )
 
     def generate_summary(self, transcript: str) -> str:
