@@ -29,17 +29,15 @@ class YouTubeLLMService:
     def get_formatted_transcript(self, video_id: str) -> str:
         """Fetches video transcripts passing local browser session cookies to bypass cloud IP blocks."""
         try:
-            api_instance = YouTubeTranscriptApi()
-            
             # Locate cookies file in backend directory 
             current_dir = os.path.dirname(os.path.abspath(__file__))
             cookies_path = os.path.join(current_dir, "youtube_cookies.txt")
             
-            # Dynamically pass cookie file if it exists to bypass Render hosting bans
+            # Pass cookies file path directly to get_transcript as expected by the library
             if os.path.exists(cookies_path):
-                transcript_list = api_instance.fetch(video_id, cookies=cookies_path)
+                transcript_list = YouTubeTranscriptApi.get_transcript(video_id, cookies=cookies_path)
             else:
-                transcript_list = api_instance.fetch(video_id)
+                transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
             
             formatted_segments = []
             chunk_text = []
