@@ -177,7 +177,12 @@
                     resultText.innerText = data.summary;
                     resultText.style.color = '#f8fafc';
                 } else {
-                    resultText.innerText = `Error: ${data.detail || 'Failed to process video.'}`;
+                    // Safe handling of string errors vs validation objects/arrays
+                    const errorMsg = typeof data.detail === 'object' 
+                        ? JSON.stringify(data.detail, null, 2) 
+                        : (data.detail || 'Failed to process video.');
+                    
+                    resultText.innerText = `Error: ${errorMsg}`;
                     resultText.style.color = '#ef4444';
                 }
             } catch (error) {
