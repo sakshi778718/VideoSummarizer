@@ -1,3 +1,4 @@
+import os
 import re
 from fastapi import HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -26,11 +27,19 @@ class YouTubeLLMService:
         return f"{mins:02d}:{secs:02d}"
 
     def get_formatted_transcript(self, video_id: str) -> str:
-        """Fetches and builds a clean, timestamp-chunked layout of the video transcript using contemporary library methods."""
+        """Fetches video transcripts passing local browser session cookies to bypass cloud IP blocks."""
         try:
-            # Instantiate the class and fetch the transcript to handle modern versions smoothly
             api_instance = YouTubeTranscriptApi()
-            transcript_list = api_instance.fetch(video_id)
+            
+            # Locate cookies file in backend directory 
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            cookies_path = os.path.join(current_dir, "youtube_cookies.txt")
+            
+            # Dynamically pass cookie file if it exists to bypass Render hosting bans
+            if os.path.exists(cookies_path):
+                transcript_list = api_instance.fetch(video_id, cookies=cookies_path)
+            else:
+                transcript_list = api_instance.fetch(video_id)
             
             formatted_segments = []
             chunk_text = []
@@ -56,7 +65,7 @@ class YouTubeLLMService:
         except Exception as e:
             raise HTTPException(
                 status_code=422, 
-                detail=f"Could not retrieve transcript. Captions may be disabled on this video. Error: {str(e)}"
+                detail=f"Could not retrieve transcript. Cloud IP restrictions or disabled captions. Error: {str(e)}"
             )
 
     def generate_summary(self, transcript: str) -> str:
