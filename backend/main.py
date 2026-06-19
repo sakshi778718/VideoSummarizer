@@ -5,10 +5,8 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import os
 
-# Import your custom service class from services.py
 from services import YouTubeLLMService
 
-# Define the expected structure from your frontend
 class SummarizeRequest(BaseModel):
     video_url: str
 
@@ -18,7 +16,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# 1. ALLOW CORS (Cross-Origin Resource Sharing)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -27,10 +24,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Fetch the OpenAI API key from Render's environment variables
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 
-# 2. INTEGRATED BACKEND ENDPOINT
 @app.post("/api/v1/summarize")
 async def summarize_video(payload: SummarizeRequest):
     try:
@@ -44,16 +39,10 @@ async def summarize_video(payload: SummarizeRequest):
                 detail="OpenAI API Key is missing on the server configuration. Please check Render Environment Variables."
             )
 
-        # Initialize your YouTubeLLMService with the active key
         yt_service = YouTubeLLMService(api_key=OPENAI_KEY)
         
-        # Step 1: Extract Video ID using your custom staticmethod logic
         video_id = yt_service.extract_video_id(url)
-        
-        # Step 2: Fetch the transcript and pass it to your LLM summarizing function
         transcript = yt_service.get_formatted_transcript(video_id)
-        
-        # Step 3: Generate the summary using your service instance (Fixed name mismatch here)
         summary_output = yt_service.generate_summary(transcript)
         
         return {
@@ -68,7 +57,7 @@ async def summarize_video(payload: SummarizeRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# 3. MOUNT FRONTEND DIRECTORY AND SERVE INDEX.HTML AT THE ROOT (/)
+# Mount frontend directory structures
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
