@@ -19,7 +19,6 @@ app = FastAPI(
 )
 
 # 1. ALLOW CORS (Cross-Origin Resource Sharing)
-# Keeps your deployment safe from cross-origin browser blocking
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -52,12 +51,10 @@ async def summarize_video(payload: SummarizeRequest):
         video_id = yt_service.extract_video_id(url)
         
         # Step 2: Fetch the transcript and pass it to your LLM summarizing function
-        # (Assuming your method name below matches what you built further down in services.py)
         transcript = yt_service.get_formatted_transcript(video_id)
         
-        # Step 3: Generate the summary using your service instance
-        # Replace 'generate_summary_from_transcript' with your actual method name if it's different!
-        summary_output = yt_service.generate_summary_from_transcript(transcript)
+        # Step 3: Generate the summary using your service instance (Fixed name mismatch here)
+        summary_output = yt_service.generate_summary(transcript)
         
         return {
             "status": "success",
@@ -66,7 +63,6 @@ async def summarize_video(payload: SummarizeRequest):
         }
         
     except HTTPException as http_err:
-        # Pass through the HTTPExceptions handled directly inside your services.py methods
         raise http_err
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
