@@ -1,143 +1,131 @@
-<!DOCTYPE html>
+
+           <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Summarizer</title>
+    <title>SummAI.yt — AI Video Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --accent-color: #3b82f6;
-            --accent-hover: #2563eb;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-        }
-
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at top right, #1e1b4b 0%, #0f172a 100%);
         }
 
-        .container {
-            width: 100%;
-            max-width: 600px;
-            padding: 2rem;
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            margin: 1rem;
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        h1 {
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
-            text-align: center;
+        .glow-hover:hover {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
         }
 
-        p.subtitle {
-            color: var(--text-muted);
-            text-align: center;
-            margin-bottom: 2rem;
-            font-size: 0.95rem;
+        /* Custom scrollbar for summary results */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
         }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
         }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 2px solid #334155;
-            border-radius: 6px;
-            background-color: #0f172a;
-            color: var(--text-main);
-            font-size: 1rem;
-            box-sizing: border-box;
-            transition: border-color 0.2s;
-        }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: var(--accent-color);
-        }
-
-        button {
-            padding: 0.75rem 1.5rem;
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        button:hover {
-            background-color: var(--accent-hover);
-        }
-
-        button:disabled {
-            background-color: #475569;
-            cursor: not-allowed;
-        }
-
-        .result-box {
-            margin-top: 2rem;
-            padding: 1rem;
-            background-color: #0f172a;
-            border-left: 4px solid var(--accent-color);
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #334155;
             border-radius: 4px;
-            display: none;
         }
 
-        .result-box h3 {
-            margin-top: 0;
+        /* Markdown formatting styles */
+        .markdown-body h2, .markdown-body h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.25rem;
+        }
+        .markdown-body ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .markdown-body li {
             margin-bottom: 0.5rem;
-            color: var(--accent-color);
+            color: #cbd5e1;
         }
-
-        .result-text {
-            line-height: 1.6;
-            font-size: 0.95rem;
-            white-space: pre-wrap;
+        .markdown-body p {
+            margin-bottom: 1rem;
+            color: #e2e8f0;
+            line-height: 1.7;
         }
-
-        .loader {
-            display: none;
-            text-align: center;
-            color: var(--text-muted);
-            margin-top: 1rem;
-            font-style: italic;
+        .markdown-body strong {
+            color: #f8fafc;
         }
     </style>
 </head>
-<body>
+<body class="min-h-screen text-slate-100 flex items-center justify-center p-4 sm:p-6 lg:p-8">
 
-    <div class="container">
-        <h1>Video Summarizer AI</h1>
-        <p class="subtitle">Enter a YouTube video URL below to fetch its AI-generated summary.</p>
-
-        <div class="input-group">
-            <input type="text" id="videoUrl" placeholder="https://www.youtube.com/watch?v=..." required>
-            <button id="submitBtn" onclick="generateSummary()">Generate Summary</button>
+    <div class="w-full max-w-4xl glass-card rounded-2xl shadow-2xl p-6 sm:p-10 transition-all duration-300">
+        
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-semibold mb-3 border border-blue-500/20">
+                ⚡ Powered by GPT-4o-mini
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-blue-400 bg-clip-text text-transparent">
+                SummAI<span class="text-blue-500">.yt</span>
+            </h1>
+            <p class="text-slate-400 mt-2 max-w-md mx-auto text-sm sm:text-base">
+                Drop any YouTube video link below to parse structured transcripts and generate high-density summaries.
+            </p>
         </div>
 
-        <div id="loader" class="loader">Processing transcript and creating summary... Please wait...</div>
+        <div class="space-y-4">
+            <div class="flex flex-col sm:flex-row gap-3">
+                <div class="relative flex-1">
+                    <input 
+                        type="text" 
+                        id="videoUrl" 
+                        placeholder="Paste YouTube link here (e.g., https://youtu.be/...)" 
+                        class="w-full px-4 py-3.5 bg-slate-900/60 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    >
+                </div>
+                <button 
+                    id="submitBtn" 
+                    onclick="generateSummary()" 
+                    class="glow-hover px-6 py-3.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-lg shadow-blue-600/20 transition-all duration-200 whitespace-nowrap"
+                >
+                    Generate Summary
+                </button>
+            </div>
+        </div>
 
-        <div id="resultBox" class="result-box">
-            <h3>AI Summary Output:</h3>
-            <div id="resultText" class="result-text"></div>
+        <div id="loader" class="hidden mt-12 text-center space-y-4">
+            <div class="inline-block w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+            <p class="text-sm text-slate-400 animate-pulse font-medium">
+                Extracting transcript and synthesizing insights...
+            </p>
+        </div>
+
+        <div id="resultBox" class="hidden mt-10 border-t border-slate-800 pt-8 animate-fadeIn">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                    AI Executive Insights
+                </h3>
+                <button 
+                    onclick="navigator.clipboard.writeText(document.getElementById('resultText').innerText); alert('Copied to clipboard!')"
+                    class="text-xs text-slate-400 hover:text-white px-2.5 py-1.5 rounded-md bg-slate-800 border border-slate-700 transition-all"
+                >
+                    Copy Output
+                </button>
+            </div>
+            
+            <div class="bg-slate-950/50 border border-slate-800 rounded-xl p-5 sm:p-6 custom-scroll overflow-y-auto max-h-[500px]">
+                <div id="resultText" class="markdown-body text-sm sm:text-base text-slate-300"></div>
+            </div>
         </div>
     </div>
 
@@ -150,49 +138,42 @@
             const resultText = document.getElementById('resultText');
 
             if (!urlInput) {
-                alert('Please enter a YouTube link first.');
+                alert('Please provide a valid YouTube link.');
                 return;
             }
 
-            // UI Feedback State
             submitBtn.disabled = true;
-            loader.style.display = 'block';
-            resultBox.style.display = 'none';
+            loader.classList.remove('hidden');
+            resultBox.classList.add('hidden');
 
-            // Targeted production URL for Render deployment
             const API_URL = "https://videosummarizer-rdw7.onrender.com/api/v1/summarize";
 
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ video_url: urlInput })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    resultText.innerText = data.summary;
-                    resultText.style.color = '#f8fafc';
+                    // Use marked.js to render Markdown format flawlessly
+                    resultText.innerHTML = marked.parse(data.summary);
                 } else {
-                    // Safe handling of string errors vs validation objects/arrays
                     const errorMsg = typeof data.detail === 'object' 
                         ? JSON.stringify(data.detail, null, 2) 
-                        : (data.detail || 'Failed to process video.');
+                        : (data.detail || 'Internal server processing error.');
                     
-                    resultText.innerText = `Error: ${errorMsg}`;
-                    resultText.style.color = '#ef4444';
+                    resultText.innerHTML = `<div class="text-red-400 font-medium">⚠️ Error encountered:</div><pre class="mt-2 text-xs bg-red-950/30 text-red-300 p-3 rounded-lg border border-red-900/50 whitespace-pre-wrap">${errorMsg}</pre>`;
                 }
             } catch (error) {
-                resultText.innerText = 'Unable to connect to backend server. Ensure the service is active on Render.';
-                resultText.style.color = '#ef4444';
-                console.error("Fetch error details:", error);
+                resultText.innerHTML = `<div class="text-red-400 font-medium">⚠️ Connection Refused:</div><p class="text-sm text-slate-400 mt-1">Unable to communicate with your Render service backend. Verify that the server instance isn't spun down or idling.</p>`;
+                console.error(error);
             } finally {
                 submitBtn.disabled = false;
-                loader.style.display = 'none';
-                resultBox.style.display = 'block';
+                loader.classList.add('hidden');
+                resultBox.classList.remove('hidden');
             }
         }
     </script>
