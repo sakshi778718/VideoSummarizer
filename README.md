@@ -26,9 +26,6 @@ https://videosummarizer-rdw7.onrender.com
 
 The AI generates summaries in the following structure:
 
-### Executive Summary (TL;DR)
-
-A concise overview of the video in 2–3 sentences.
 
 ### Key Takeaways
 
