@@ -1,5 +1,7 @@
 import os
 import re
+import http.cookiejar
+import requests
 from fastapi import HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
 from openai import OpenAI
@@ -27,35 +29,40 @@ class YouTubeLLMService:
         return f"{mins:02d}:{secs:02d}"
 
     def get_formatted_transcript(self, video_id: str) -> str:
-        """Fetches transcripts using modern instance method specs to prevent attribute loss."""
+        """Fetches video transcripts by injecting browser session tokens directly into the HTTP client context."""
         transcript_list = None
         errors = []
         
         # Resolve path to backend/youtube_cookies.txt
         current_dir = os.path.dirname(os.path.abspath(__file__))
         cookies_path = os.path.join(current_dir, "youtube_cookies.txt")
-        cookies_file = cookies_path if os.path.exists(cookies_path) else None
+        
+        # Create an authorized requests session context
+        session = requests.Session()
+        session.headers.update({"Accept-Language": "en-US,en;q=0.9"})
+        
+        if os.path.exists(cookies_path):
+            try:
+                # Load Netscape HTTP Cookie file format into the session jar
+                cookie_jar = http.cookiejar.MozillaCookieJar(cookies_path)
+                cookie_jar.load(ignore_discard=True, ignore_expires=True)
+                session.cookies.update(cookie_jar)
+            except Exception as cookie_err:
+                errors.append(f"Cookie parsing warning: {str(cookie_err)}")
 
-        # Correct instantiation for modern package specs
-        yt_api_instance = YouTubeTranscriptApi()
+        # Initialize the modern API engine passing our custom session container
+        yt_api_instance = YouTubeTranscriptApi(http_client=session)
 
-        # Strategy 1: Attempt dynamic modern fetch syntax
+        # Strategy 1: Modern clean instance execution
         try:
-            if cookies_file:
-                transcript_list = yt_api_instance.fetch(video_id, cookies=cookies_file)
-            else:
-                transcript_list = yt_api_instance.fetch(video_id, languages=['en', 'hi'])
+            transcript_list = yt_api_instance.fetch(video_id, languages=['en', 'hi'])
         except Exception as e:
-            errors.append(f"Instance fetch method block error: {str(e)}")
+            errors.append(f"Instance fetch path blocked: {str(e)}")
 
-        # Strategy 2: Modern instance list configuration fallback
+        # Strategy 2: Modern dynamic multi-language list enumeration fallback
         if not transcript_list:
             try:
-                if cookies_file:
-                    retrieved_list = yt_api_instance.list(video_id, cookies=cookies_file)
-                else:
-                    retrieved_list = yt_api_instance.list(video_id)
-                    
+                retrieved_list = yt_api_instance.list(video_id)
                 try:
                     transcript_obj = retrieved_list.find_transcript(['en', 'hi', 'es'])
                 except Exception:
@@ -63,7 +70,7 @@ class YouTubeLLMService:
                     
                 transcript_list = transcript_obj.fetch()
             except Exception as e:
-                errors.append(f"Instance list translation method block error: {str(e)}")
+                errors.append(f"Instance fallback list path blocked: {str(e)}")
 
         # Final Exception Guard
         if not transcript_list:
@@ -73,7 +80,7 @@ class YouTubeLLMService:
                 detail=f"Transcript engine exhausted all structural methods. Details: {error_details}"
             )
 
-        # Process text chunks chronologically
+        # Process parsed text chunks chronologically
         formatted_segments = []
         chunk_text = []
         start_time = 0.0
