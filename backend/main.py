@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -9,6 +10,7 @@ from services import YouTubeLLMService
 
 class SummarizeRequest(BaseModel):
     video_url: str
+    dimension: str = "executive"  # Feature flag selection map parameter
 
 app = FastAPI(
     title="VideoIntelligenceAPI",
@@ -43,7 +45,7 @@ async def summarize_video(payload: SummarizeRequest):
         
         video_id = yt_service.extract_video_id(url)
         transcript = yt_service.get_formatted_transcript(video_id)
-        summary_output = yt_service.generate_summary(transcript)
+        summary_output = yt_service.generate_summary(transcript, payload.dimension)
         
         return {
             "status": "success",
