@@ -93,7 +93,6 @@ class YouTubeLLMService:
     def generate_summary(self, transcript: str, dimension: str = "executive") -> str:
         """Invokes the LLM to synthesize raw text into specialized visual and analytical layout formats."""
         try:
-            # Multi-dimension prompting maps based on choice selection
             dimensions_prompt = {
                 "executive": (
                     "- **Executive Summary (TL;DR)**: A punchy 2-3 sentence high-level overview.\n"
