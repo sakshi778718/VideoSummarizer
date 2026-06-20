@@ -1,7 +1,5 @@
 import os
 import re
-import http.cookiejar
-import requests
 from fastapi import HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
 from openai import OpenAI
@@ -29,53 +27,33 @@ class YouTubeLLMService:
         return f"{mins:02d}:{secs:02d}"
 
     def get_formatted_transcript(self, video_id: str) -> str:
-        """Fetches transcripts by spoofing a desktop browser to slip past cloud data center IP blocks."""
+        """Fetches transcripts using standard class methods with direct cookie file paths to break data center bans."""
         transcript_list = None
         errors = []
         
-        # Resolve path to backend/youtube_cookies.txt
+        # Resolve absolute path to backend/youtube_cookies.txt
         current_dir = os.path.dirname(os.path.abspath(__file__))
         cookies_path = os.path.join(current_dir, "youtube_cookies.txt")
-        
-        # Create a premium request session mimicking a real human desktop visitor
-        session = requests.Session()
-        session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-            "Accept-Language": "en-US,en;q=0.9,hi;q=0.8",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-            "Cache-Control": "max-age=0",
-            "Sec-Ch-Ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-            "Sec-Ch-Ua-Mobile": "?0",
-            "Sec-Ch-Ua-Platform": '"Windows"',
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "none",
-            "Sec-Fetch-User": "?1",
-            "Upgrade-Insecure-Requests": "1"
-        })
-        
-        if os.path.exists(cookies_path):
-            try:
-                # Load Netscape HTTP Cookie file format tokens into the session jar
-                cookie_jar = http.cookiejar.MozillaCookieJar(cookies_path)
-                cookie_jar.load(ignore_discard=True, ignore_expires=True)
-                session.cookies.update(cookie_jar)
-            except Exception as cookie_err:
-                errors.append(f"Cookie loading warning: {str(cookie_err)}")
+        has_cookies = os.path.exists(cookies_path)
 
-        # Initialize the modern API engine passing our authenticated browser session
-        yt_api_instance = YouTubeTranscriptApi(http_client=session)
-
-        # Strategy 1: Modern clean instance execution
+        # Strategy 1: Direct native fetch parameter using absolute string path
         try:
-            transcript_list = yt_api_instance.fetch(video_id, languages=['en', 'hi'])
+            if has_cookies:
+                # The library reads the text file internally and injects it into its own network agent
+                transcript_list = YouTubeTranscriptApi.get_transcript(video_id, cookies=cookies_path)
+            else:
+                transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'hi'])
         except Exception as e:
             errors.append(f"Primary fetch path blocked: {str(e)}")
 
-        # Strategy 2: Modern adaptive list enumeration fallback
+        # Strategy 2: Native list_transcripts fallback method using absolute string path
         if not transcript_list:
             try:
-                retrieved_list = yt_api_instance.list(video_id)
+                if has_cookies:
+                    retrieved_list = YouTubeTranscriptApi.list_transcripts(video_id, cookies=cookies_path)
+                else:
+                    retrieved_list = YouTubeTranscriptApi.list_transcripts(video_id)
+                    
                 try:
                     transcript_obj = retrieved_list.find_transcript(['en', 'hi', 'es'])
                 except Exception:
@@ -107,7 +85,6 @@ class YouTubeLLMService:
             
             chunk_text.append(text_content)
             
-            # Chunk transcript segments every 120 seconds to maintain contextual relevance
             if start_val - start_time > 120:
                 timestamp = self.format_time(start_time)
                 formatted_segments.append(f"[{timestamp}] {' '.join(chunk_text)}")
