@@ -47,29 +47,26 @@
 </head>
 <body class="min-h-screen text-slate-100 flex flex-col items-center">
 
-    <!-- Top Left-Aligned Header Control Navbar Section -->
-    <header class="w-full border-b border-slate-800/80 bg-slate-900/40 backdrop-blur-md px-4 sm:px-8 py-4">
-        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+    <header class="w-full border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md px-4 sm:px-6 py-4">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             
-            <!-- Left-Most Application Title Brand Placement -->
-            <div class="flex items-center gap-3 self-start sm:self-auto">
+            <div class="flex items-center gap-2 shrink-0 self-start md:self-auto">
                 <h1 class="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-blue-400 bg-clip-text text-transparent">
                     SummAI<span class="text-blue-500">.yt</span>
                 </h1>
-                <span class="hidden md:inline-block px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-semibold border border-blue-500/20">
+                <span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-semibold border border-blue-500/20">
                     v1.0.0
                 </span>
             </div>
 
-            <!-- Header Processing Form Container Items Alignment -->
-            <div class="w-full sm:w-auto flex flex-col md:flex-row gap-2.5 items-stretch md:items-center flex-1 max-w-3xl justify-end">
+            <div class="w-full md:w-auto flex flex-col sm:flex-row gap-3 items-stretch sm:items-center flex-1 max-w-4xl md:justify-end">
                 <input 
                     type="text" 
                     id="videoUrl" 
                     placeholder="Paste YouTube link here (e.g., https://youtu.be/...)" 
-                    class="px-4 py-2.5 bg-slate-950/60 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm flex-1"
+                    class="px-4 py-2.5 bg-slate-950/50 border border-slate-700/60 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm flex-1"
                 >
-                <select id="summaryDimension" class="px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium cursor-pointer">
+                <select id="summaryDimension" class="px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium cursor-pointer shrink-0">
                     <option value="executive">👔 Executive Summary</option>
                     <option value="educational">🎓 Deep Study Guide</option>
                     <option value="actionable">🎯 Action Item Tasks</option>
@@ -77,7 +74,7 @@
                 <button 
                     id="submitBtn" 
                     onclick="generateSummary()" 
-                    class="glow-hover px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl shadow-md transition-all whitespace-nowrap"
+                    class="glow-hover px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl shadow-md transition-all whitespace-nowrap shrink-0"
                 >
                     Generate Summary
                 </button>
@@ -86,26 +83,23 @@
         </div>
     </header>
 
-    <!-- Main Workspace Container Grid Wrapper Display Layout -->
     <main class="w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-8 flex flex-col items-center">
         
-        <!-- Welcome Hero/Instruction Callout State Header Box -->
-        <div id="welcomeHero" class="text-center my-12 max-w-xl">
-            <h2 class="text-xl sm:text-2xl font-bold mb-3 text-slate-200">Transform Long Streams into Immediate Visual Node Maps</h2>
+        <div id="welcomeHero" class="text-center my-16 max-w-xl">
+            <h2 class="text-xl sm:text-2xl font-bold mb-3 text-slate-200">Transform Video Timelines into High-Density Knowledge Outline Nodes</h2>
             <p class="text-sm text-slate-400 leading-relaxed">
-                Provide any chronological YouTube watch link in the top bar engine interface above to extract high-density structural outlines and deep markdown notes instantly.
+                Provide a YouTube Watch URL in the top interface to generate multi-dimensional notes alongside an interactive visualization chart map.
             </p>
         </div>
 
-        <div id="loader" class="hidden my-16 text-center space-y-4">
+        <div id="loader" class="hidden my-20 text-center space-y-4">
             <div class="inline-block w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
             <p class="text-sm text-slate-400 animate-pulse font-medium">
-                Parsing video scripts and calculating structural map node coordinates...
+                Parsing video transcript layers and computing layout tree paths...
             </p>
         </div>
 
-        <!-- Dynamic Summary + Diagram Interface Output Area Card Panel -->
-        <div id="resultBox" class="hidden w-full space-y-8 animate-fadeIn">
+        <div id="resultBox" class="hidden w-full space-y-8">
             
             <div class="glass-card rounded-2xl shadow-xl p-6 sm:p-8">
                 <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
@@ -137,7 +131,6 @@
 
         </div>
 
-        <!-- Core Features Highlighting Badges Row Component Matrix Container Grid Grid System -->
         <div class="w-full grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
             <div class="glass-card rounded-xl p-5 border border-slate-800 bg-slate-900/20">
                 <div class="text-blue-500 font-bold text-base mb-2">10+ Key Dimensions</div>
