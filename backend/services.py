@@ -29,7 +29,7 @@ class YouTubeLLMService:
         return f"{mins:02d}:{secs:02d}"
 
     def get_formatted_transcript(self, video_id: str) -> str:
-        """Fetches video transcripts by injecting browser session tokens directly into the HTTP client context."""
+        """Fetches transcripts by spoofing a desktop browser to slip past cloud data center IP blocks."""
         transcript_list = None
         errors = []
         
@@ -37,29 +37,42 @@ class YouTubeLLMService:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         cookies_path = os.path.join(current_dir, "youtube_cookies.txt")
         
-        # Create an authorized requests session context
+        # Create a premium request session mimicking a real human desktop visitor
         session = requests.Session()
-        session.headers.update({"Accept-Language": "en-US,en;q=0.9"})
+        session.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9,hi;q=0.8",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Cache-Control": "max-age=0",
+            "Sec-Ch-Ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1"
+        })
         
         if os.path.exists(cookies_path):
             try:
-                # Load Netscape HTTP Cookie file format into the session jar
+                # Load Netscape HTTP Cookie file format tokens into the session jar
                 cookie_jar = http.cookiejar.MozillaCookieJar(cookies_path)
                 cookie_jar.load(ignore_discard=True, ignore_expires=True)
                 session.cookies.update(cookie_jar)
             except Exception as cookie_err:
-                errors.append(f"Cookie parsing warning: {str(cookie_err)}")
+                errors.append(f"Cookie loading warning: {str(cookie_err)}")
 
-        # Initialize the modern API engine passing our custom session container
+        # Initialize the modern API engine passing our authenticated browser session
         yt_api_instance = YouTubeTranscriptApi(http_client=session)
 
         # Strategy 1: Modern clean instance execution
         try:
             transcript_list = yt_api_instance.fetch(video_id, languages=['en', 'hi'])
         except Exception as e:
-            errors.append(f"Instance fetch path blocked: {str(e)}")
+            errors.append(f"Primary fetch path blocked: {str(e)}")
 
-        # Strategy 2: Modern dynamic multi-language list enumeration fallback
+        # Strategy 2: Modern adaptive list enumeration fallback
         if not transcript_list:
             try:
                 retrieved_list = yt_api_instance.list(video_id)
@@ -70,14 +83,14 @@ class YouTubeLLMService:
                     
                 transcript_list = transcript_obj.fetch()
             except Exception as e:
-                errors.append(f"Instance fallback list path blocked: {str(e)}")
+                errors.append(f"Adaptive fallback list path blocked: {str(e)}")
 
         # Final Exception Guard
         if not transcript_list:
             error_details = " | ".join(errors)
             raise HTTPException(
                 status_code=422, 
-                detail=f"Transcript engine exhausted all structural methods. Details: {error_details}"
+                detail=f"Transcript engine exhausted all structural methods. Cloud IP might be blocked or cookies expired. Details: {error_details}"
             )
 
         # Process parsed text chunks chronologically
@@ -94,6 +107,7 @@ class YouTubeLLMService:
             
             chunk_text.append(text_content)
             
+            # Chunk transcript segments every 120 seconds to maintain contextual relevance
             if start_val - start_time > 120:
                 timestamp = self.format_time(start_time)
                 formatted_segments.append(f"[{timestamp}] {' '.join(chunk_text)}")
