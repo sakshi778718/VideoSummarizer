@@ -27,7 +27,7 @@ class YouTubeLLMService:
         return f"{mins:02d}:{secs:02d}"
 
     def get_formatted_transcript(self, video_id: str) -> str:
-        """Fetches video transcripts using adaptive fallback strategies to handle environment and version updates."""
+        """Fetches video transcripts using adaptive instance fallback strategies to support new version specs."""
         transcript_list = None
         last_error = None
         
@@ -36,35 +36,29 @@ class YouTubeLLMService:
         cookies_path = os.path.join(current_dir, "youtube_cookies.txt")
         cookies = cookies_path if os.path.exists(cookies_path) else None
 
-        # Strategy 1: Direct Class Method Call (Standard format)
+        # Instantiate the API client according to recent package specs
+        yt_api = YouTubeTranscriptApi()
+
+        # Strategy 1: Direct modern fetch instance call
         try:
-            if cookies:
-                transcript_list = YouTubeTranscriptApi.get_transcript(video_id, cookies=cookies)
-            else:
-                transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+            transcript_list = yt_api.fetch(video_id, languages=['en', 'hi'])
         except Exception as e:
             last_error = e
 
-        # Strategy 2: Modern Listing Enumeration Fallback (Using list_transcripts)
+        # Strategy 2: Instance List enumeration fallback
         if not transcript_list:
             try:
-                if cookies:
-                    retrieved_list = YouTubeTranscriptApi.list_transcripts(video_id, cookies=cookies)
-                else:
-                    retrieved_list = YouTubeTranscriptApi.list_transcripts(video_id)
-                
-                # Find any english or primary language translation stream
+                retrieved_list = yt_api.list(video_id)
                 try:
                     transcript_obj = retrieved_list.find_transcript(['en', 'es', 'hi'])
                 except Exception:
-                    # Fallback default directly picking the first available item inside list
                     transcript_obj = next(iter(retrieved_list))
                     
                 transcript_list = transcript_obj.fetch()
             except Exception as e:
                 last_error = e
 
-        # Final Exception Guard: If all collection variants fail, inform the client container
+        # Final Exception Guard
         if not transcript_list:
             raise HTTPException(
                 status_code=422, 
@@ -77,13 +71,16 @@ class YouTubeLLMService:
         start_time = 0.0
         
         for entry in transcript_list:
+            text_content = entry.text if hasattr(entry, 'text') else entry.get('text', '')
+            start_val = entry.start if hasattr(entry, 'start') else entry.get('start', 0.0)
+
             if not chunk_text:
-                start_time = entry['start']
+                start_time = start_val
             
-            chunk_text.append(entry['text'])
+            chunk_text.append(text_content)
             
             # Chunk transcript segments every 120 seconds to maintain contextual relevance
-            if entry['start'] - start_time > 120:
+            if start_val - start_time > 120:
                 timestamp = self.format_time(start_time)
                 formatted_segments.append(f"[{timestamp}] {' '.join(chunk_text)}")
                 chunk_text = []
@@ -93,15 +90,36 @@ class YouTubeLLMService:
             
         return "\n\n".join(formatted_segments)
 
-    def generate_summary(self, transcript: str) -> str:
-        """Invokes the LLM to synthesize raw structured text into an executive summary."""
+    def generate_summary(self, transcript: str, dimension: str = "executive") -> str:
+        """Invokes the LLM to synthesize raw text into specialized visual and analytical layout formats."""
         try:
+            # Multi-dimension prompting maps based on choice selection
+            dimensions_prompt = {
+                "executive": (
+                    "- **Executive Summary (TL;DR)**: A punchy 2-3 sentence high-level overview.\n"
+                    "- **Key Takeaways**: Bulleted items highlighting core data and lessons.\n"
+                    "- **Chronological Deep Dive**: Breakdown the narrative flow referencing the [MM:SS] timestamps."
+                ),
+                "educational": (
+                    "- **Core Definitions**: Technical terms and concepts mapped out clearly.\n"
+                    "- **Step-by-Step Concepts**: Deconstructed complex concepts explained linearly.\n"
+                    "- **Active Recall Q&A**: Five key questions and flashcard-style answers derived from the content."
+                ),
+                "actionable": (
+                    "- **Direct Directives**: What concrete actions are specified by the speaker?\n"
+                    "- **Task Matrix Checklist**: Clean checklist format explicitly referencing exact [MM:SS] points.\n"
+                    "- **Core Resource Index**: Mentions of tools, books, frameworks or external citations."
+                )
+            }
+
             system_instruction = (
                 "You are an elite research analyst. Synthesize the provided timestamped YouTube transcript "
-                "into a high-density, professional summary report. Format your output strictly using Markdown:\n"
-                "- **Executive Summary (TL;DR)**: A punchy 2-3 sentence high-level overview.\n"
-                "- **Key Takeaways**: Bulleted items highlighting core data and lessons.\n"
-                "- **Chronological Deep Dive**: Breakdown the narrative flow referencing the [MM:SS] timestamps."
+                "into a high-density, professional summary report. Format your output strictly using Markdown.\n\n"
+                f"Structure the report layout precisely around this dimension option group:\n{dimensions_prompt.get(dimension, dimensions_prompt['executive'])}\n\n"
+                "CRITICAL EXTRA INSTRUCTION: At the absolute bottom of your entire response, add a section header exactly named "
+                "`## Visual Mind Map Representation`. Below that header, write a valid, beautiful nested Markdown list structure "
+                "representing the core map tree topology (using single hyphens, indenting child items with tabs/spaces) summarizing "
+                "the entire subject matter hierarchy. This tree will be parsed directly into an interactive graphic diagram node chart."
             )
             
             response = self.client.chat.completions.create(
