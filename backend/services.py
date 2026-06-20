@@ -137,4 +137,3 @@ class YouTubeLLMService:
             return response.choices[0].message.content
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"AI synthesis engine execution failure: {str(e)}")
-              
