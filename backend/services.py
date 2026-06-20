@@ -27,30 +27,37 @@ class YouTubeLLMService:
         return f"{mins:02d}:{secs:02d}"
 
     def get_formatted_transcript(self, video_id: str) -> str:
-        """Fetches video transcripts using adaptive instance fallback strategies to support new version specs."""
+        """Fetches video transcripts passing session cookies directly to bypass cloud IP blocks."""
         transcript_list = None
         last_error = None
         
         # Determine cookies path if available
         current_dir = os.path.dirname(os.path.abspath(__file__))
         cookies_path = os.path.join(current_dir, "youtube_cookies.txt")
-        cookies = cookies_path if os.path.exists(cookies_path) else None
-
+        
         # Instantiate the API client according to recent package specs
         yt_api = YouTubeTranscriptApi()
 
-        # Strategy 1: Direct modern fetch instance call
+        # Strategy 1: Modern fetch instance execution with explicit cookies passing map context
         try:
-            transcript_list = yt_api.fetch(video_id, languages=['en', 'hi'])
+            if os.path.exists(cookies_path):
+                # Correct instance configuration signature parameter passing pattern structure
+                transcript_list = yt_api.fetch(video_id, cookies=cookies_path)
+            else:
+                transcript_list = yt_api.fetch(video_id, languages=['en', 'hi'])
         except Exception as e:
             last_error = e
 
-        # Strategy 2: Instance List enumeration fallback
+        # Strategy 2: Instance List enumeration fallback if direct fetch hits structural blocks
         if not transcript_list:
             try:
-                retrieved_list = yt_api.list(video_id)
+                if os.path.exists(cookies_path):
+                    retrieved_list = yt_api.list(video_id, cookies=cookies_path)
+                else:
+                    retrieved_list = yt_api.list(video_id)
+                    
                 try:
-                    transcript_obj = retrieved_list.find_transcript(['en', 'es', 'hi'])
+                    transcript_obj = retrieved_list.find_transcript(['en', 'hi', 'es'])
                 except Exception:
                     transcript_obj = next(iter(retrieved_list))
                     
@@ -62,7 +69,7 @@ class YouTubeLLMService:
         if not transcript_list:
             raise HTTPException(
                 status_code=422, 
-                detail=f"Transcript engine exhausted all structural methods. Captions might be fully disabled or blocked. Internal Error: {str(last_error)}"
+                detail=f"Transcript engine exhausted all structural methods. Cloud IP might be blocked or captions disabled. Internal Error: {str(last_error)}"
             )
 
         # Process the successfully parsed text chunks chronologically
