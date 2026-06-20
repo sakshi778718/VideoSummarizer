@@ -1,7 +1,6 @@
 import os
 import re
 from fastapi import HTTPException
-import youtube_transcript_api
 from youtube_transcript_api import YouTubeTranscriptApi
 from openai import OpenAI
 
@@ -38,50 +37,30 @@ class YouTubeLLMService:
         cookies = cookies_path if os.path.exists(cookies_path) else None
 
         # Strategy 1: Direct Class Method Call (Standard format)
+        try:
+            if cookies:
+                transcript_list = YouTubeTranscriptApi.get_transcript(video_id, cookies=cookies)
+            else:
+                transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+        except Exception as e:
+            last_error = e
+
+        # Strategy 2: Modern Listing Enumeration Fallback (Using list_transcripts)
         if not transcript_list:
             try:
                 if cookies:
-                    transcript_list = YouTubeTranscriptApi.get_transcript(video_id, cookies=cookies)
+                    retrieved_list = YouTubeTranscriptApi.list_transcripts(video_id, cookies=cookies)
                 else:
-                    transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
-            except Exception as e:
-                last_error = e
-
-        # Strategy 2: Direct Module Function Reference Wrapper
-        if not transcript_list:
-            try:
-                if hasattr(youtube_transcript_api, 'get_transcript'):
-                    if cookies:
-                        transcript_list = youtube_transcript_api.get_transcript(video_id, cookies=cookies)
-                    else:
-                        transcript_list = youtube_transcript_api.get_transcript(video_id)
-            except Exception as e:
-                last_error = e
-
-        # Strategy 3: Advanced Modern Listing Enumeration Fallback
-        if not transcript_list:
-            try:
-                # Try finding through list_transcripts
-                get_list_method = None
-                if hasattr(YouTubeTranscriptApi, 'list_transcripts'):
-                    get_list_method = YouTubeTranscriptApi.list_transcripts
-                elif hasattr(youtube_transcript_api, 'list_transcripts'):
-                    get_list_method = youtube_transcript_api.list_transcripts
+                    retrieved_list = YouTubeTranscriptApi.list_transcripts(video_id)
                 
-                if get_list_method:
-                    if cookies:
-                        retrieved_list = get_list_method(video_id, cookies=cookies)
-                    else:
-                        retrieved_list = get_list_method(video_id)
+                # Find any english or primary language translation stream
+                try:
+                    transcript_obj = retrieved_list.find_transcript(['en', 'es', 'hi'])
+                except Exception:
+                    # Fallback default directly picking the first available item inside list
+                    transcript_obj = next(iter(retrieved_list))
                     
-                    # Find any english or primary language translation stream
-                    try:
-                        transcript_obj = retrieved_list.find_transcript(['en', 'es', 'hi'])
-                    except:
-                        # Fallback default directly picking the first available item inside list
-                        transcript_obj = next(iter(retrieved_list))
-                        
-                    transcript_list = transcript_obj.fetch()
+                transcript_list = transcript_obj.fetch()
             except Exception as e:
                 last_error = e
 
