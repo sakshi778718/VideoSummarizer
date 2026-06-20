@@ -1,6 +1,4 @@
-
-            
-    import os
+import os
 import re
 from fastapi import HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -141,3 +139,4 @@ class YouTubeLLMService:
             return response.choices[0].message.content
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"AI synthesis engine execution failure: {str(e)}")
+  
