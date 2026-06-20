@@ -27,31 +27,34 @@ class YouTubeLLMService:
         return f"{mins:02d}:{secs:02d}"
 
     def get_formatted_transcript(self, video_id: str) -> str:
-        """Fetches video transcripts using correct class methods and passes cookies to bypass cloud IP blocks."""
+        """Fetches transcripts using modern instance method specs to prevent attribute loss."""
         transcript_list = None
         errors = []
         
-        # Determine cookies path if available
+        # Resolve path to backend/youtube_cookies.txt
         current_dir = os.path.dirname(os.path.abspath(__file__))
         cookies_path = os.path.join(current_dir, "youtube_cookies.txt")
-        has_cookies = os.path.exists(cookies_path)
+        cookies_file = cookies_path if os.path.exists(cookies_path) else None
 
-        # Strategy 1: Direct standard transcript fetch
+        # Correct instantiation for modern package specs
+        yt_api_instance = YouTubeTranscriptApi()
+
+        # Strategy 1: Attempt dynamic modern fetch syntax
         try:
-            if has_cookies:
-                transcript_list = YouTubeTranscriptApi.get_transcript(video_id, cookies=cookies_path)
+            if cookies_file:
+                transcript_list = yt_api_instance.fetch(video_id, cookies=cookies_file)
             else:
-                transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'hi'])
+                transcript_list = yt_api_instance.fetch(video_id, languages=['en', 'hi'])
         except Exception as e:
-            errors.append(f"Strategy 1 (get_transcript) failed: {str(e)}")
+            errors.append(f"Instance fetch method block error: {str(e)}")
 
-        # Strategy 2: List transcripts fallback (useful for picking specific language streams)
+        # Strategy 2: Modern instance list configuration fallback
         if not transcript_list:
             try:
-                if has_cookies:
-                    retrieved_list = YouTubeTranscriptApi.list_transcripts(video_id, cookies=cookies_path)
+                if cookies_file:
+                    retrieved_list = yt_api_instance.list(video_id, cookies=cookies_file)
                 else:
-                    retrieved_list = YouTubeTranscriptApi.list_transcripts(video_id)
+                    retrieved_list = yt_api_instance.list(video_id)
                     
                 try:
                     transcript_obj = retrieved_list.find_transcript(['en', 'hi', 'es'])
@@ -60,31 +63,30 @@ class YouTubeLLMService:
                     
                 transcript_list = transcript_obj.fetch()
             except Exception as e:
-                errors.append(f"Strategy 2 (list_transcripts) failed: {str(e)}")
+                errors.append(f"Instance list translation method block error: {str(e)}")
 
         # Final Exception Guard
         if not transcript_list:
             error_details = " | ".join(errors)
             raise HTTPException(
                 status_code=422, 
-                detail=f"Transcript engine exhausted all structural methods. Cloud IP might be blocked or captions disabled. Details: {error_details}"
+                detail=f"Transcript engine exhausted all structural methods. Details: {error_details}"
             )
 
-        # Process the successfully parsed text chunks chronologically
+        # Process text chunks chronologically
         formatted_segments = []
         chunk_text = []
         start_time = 0.0
         
         for entry in transcript_list:
-            text_content = entry.get('text', '')
-            start_val = entry.get('start', 0.0)
+            text_content = entry.get('text', '') if isinstance(entry, dict) else getattr(entry, 'text', '')
+            start_val = entry.get('start', 0.0) if isinstance(entry, dict) else getattr(entry, 'start', 0.0)
 
             if not chunk_text:
                 start_time = start_val
             
             chunk_text.append(text_content)
             
-            # Chunk transcript segments every 120 seconds to maintain contextual relevance
             if start_val - start_time > 120:
                 timestamp = self.format_time(start_time)
                 formatted_segments.append(f"[{timestamp}] {' '.join(chunk_text)}")
