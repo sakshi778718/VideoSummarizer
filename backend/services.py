@@ -27,34 +27,31 @@ class YouTubeLLMService:
         return f"{mins:02d}:{secs:02d}"
 
     def get_formatted_transcript(self, video_id: str) -> str:
-        """Fetches video transcripts passing session cookies directly to bypass cloud IP blocks."""
+        """Fetches video transcripts using correct class methods and passes cookies to bypass cloud IP blocks."""
         transcript_list = None
-        last_error = None
+        errors = []
         
         # Determine cookies path if available
         current_dir = os.path.dirname(os.path.abspath(__file__))
         cookies_path = os.path.join(current_dir, "youtube_cookies.txt")
-        
-        # Instantiate the API client according to recent package specs
-        yt_api = YouTubeTranscriptApi()
+        has_cookies = os.path.exists(cookies_path)
 
-        # Strategy 1: Modern fetch instance execution with explicit cookies passing map context
+        # Strategy 1: Direct standard transcript fetch
         try:
-            if os.path.exists(cookies_path):
-                # Correct instance configuration signature parameter passing pattern structure
-                transcript_list = yt_api.fetch(video_id, cookies=cookies_path)
+            if has_cookies:
+                transcript_list = YouTubeTranscriptApi.get_transcript(video_id, cookies=cookies_path)
             else:
-                transcript_list = yt_api.fetch(video_id, languages=['en', 'hi'])
+                transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'hi'])
         except Exception as e:
-            last_error = e
+            errors.append(f"Strategy 1 (get_transcript) failed: {str(e)}")
 
-        # Strategy 2: Instance List enumeration fallback if direct fetch hits structural blocks
+        # Strategy 2: List transcripts fallback (useful for picking specific language streams)
         if not transcript_list:
             try:
-                if os.path.exists(cookies_path):
-                    retrieved_list = yt_api.list(video_id, cookies=cookies_path)
+                if has_cookies:
+                    retrieved_list = YouTubeTranscriptApi.list_transcripts(video_id, cookies=cookies_path)
                 else:
-                    retrieved_list = yt_api.list(video_id)
+                    retrieved_list = YouTubeTranscriptApi.list_transcripts(video_id)
                     
                 try:
                     transcript_obj = retrieved_list.find_transcript(['en', 'hi', 'es'])
@@ -63,13 +60,14 @@ class YouTubeLLMService:
                     
                 transcript_list = transcript_obj.fetch()
             except Exception as e:
-                last_error = e
+                errors.append(f"Strategy 2 (list_transcripts) failed: {str(e)}")
 
         # Final Exception Guard
         if not transcript_list:
+            error_details = " | ".join(errors)
             raise HTTPException(
                 status_code=422, 
-                detail=f"Transcript engine exhausted all structural methods. Cloud IP might be blocked or captions disabled. Internal Error: {str(last_error)}"
+                detail=f"Transcript engine exhausted all structural methods. Cloud IP might be blocked or captions disabled. Details: {error_details}"
             )
 
         # Process the successfully parsed text chunks chronologically
@@ -78,8 +76,8 @@ class YouTubeLLMService:
         start_time = 0.0
         
         for entry in transcript_list:
-            text_content = entry.text if hasattr(entry, 'text') else entry.get('text', '')
-            start_val = entry.start if hasattr(entry, 'start') else entry.get('start', 0.0)
+            text_content = entry.get('text', '')
+            start_val = entry.get('start', 0.0)
 
             if not chunk_text:
                 start_time = start_val
@@ -139,3 +137,4 @@ class YouTubeLLMService:
             return response.choices[0].message.content
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"AI synthesis engine execution failure: {str(e)}")
+              
