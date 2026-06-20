@@ -28,7 +28,6 @@
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
 
-        /* Markdown Formatting Specific Rules */
         .markdown-body h2, .markdown-body h3 {
             font-size: 1.25rem; font-weight: 700; color: #3b82f6;
             margin-top: 1.5rem; margin-bottom: 0.75rem;
@@ -39,7 +38,6 @@
         .markdown-body p { margin-bottom: 1rem; color: #e2e8f0; line-height: 1.7; }
         .markdown-body strong { color: #f8fafc; }
 
-        /* Interactive Diagram Container Canvas Elements */
         .markmap-container {
             position: relative; width: 100%; height: 450px;
             background: #020617; border-radius: 12px; border: 1px solid #1e293b;
@@ -47,119 +45,115 @@
         .markmap-svg { width: 100%; height: 100%; }
     </style>
 </head>
-<body class="min-h-screen text-slate-100 flex flex-col items-center p-4 sm:p-6 lg:p-8">
+<body class="min-h-screen text-slate-100 flex flex-col items-center">
 
-    <div class="w-full max-w-4xl glass-card rounded-2xl shadow-2xl p-6 sm:p-10 transition-all duration-300 mt-4">
-        
-        <div class="text-center mb-8">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-semibold mb-3 border border-blue-500/20">
-                ⚡ Powered by GPT-4o-mini & Modern Structuring Engines
+    <!-- Top Left-Aligned Header Control Navbar Section -->
+    <header class="w-full border-b border-slate-800/80 bg-slate-900/40 backdrop-blur-md px-4 sm:px-8 py-4">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            
+            <!-- Left-Most Application Title Brand Placement -->
+            <div class="flex items-center gap-3 self-start sm:self-auto">
+                <h1 class="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-blue-400 bg-clip-text text-transparent">
+                    SummAI<span class="text-blue-500">.yt</span>
+                </h1>
+                <span class="hidden md:inline-block px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-semibold border border-blue-500/20">
+                    v1.0.0
+                </span>
             </div>
-            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-blue-400 bg-clip-text text-transparent">
-                SummAI<span class="text-blue-500">.yt</span>
-            </h1>
-            <p class="text-slate-400 mt-2 max-w-md mx-auto text-sm sm:text-base">
-                Drop any YouTube video link below to parse structured transcripts, change summary dimensions, and generate interactive mind maps.
-            </p>
-        </div>
 
-        <div class="space-y-4">
-            <div class="flex flex-col md:flex-row gap-3">
-                <div class="relative flex-1">
-                    <input 
-                        type="text" 
-                        id="videoUrl" 
-                        placeholder="Paste YouTube link here (e.g., https://youtu.be/...)" 
-                        class="w-full px-4 py-3.5 bg-slate-900/60 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    >
-                </div>
-                <div class="relative min-w-[180px]">
-                    <select id="summaryDimension" class="w-full h-full px-4 py-3.5 bg-slate-900/90 border border-slate-700 rounded-xl text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer text-sm font-medium">
-                        <option value="executive">👔 Executive Summary</option>
-                        <option value="educational">🎓 Deep Study Guide</option>
-                        <option value="actionable">🎯 Action Item Tasks</option>
-                    </select>
-                </div>
+            <!-- Header Processing Form Container Items Alignment -->
+            <div class="w-full sm:w-auto flex flex-col md:flex-row gap-2.5 items-stretch md:items-center flex-1 max-w-3xl justify-end">
+                <input 
+                    type="text" 
+                    id="videoUrl" 
+                    placeholder="Paste YouTube link here (e.g., https://youtu.be/...)" 
+                    class="px-4 py-2.5 bg-slate-950/60 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm flex-1"
+                >
+                <select id="summaryDimension" class="px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium cursor-pointer">
+                    <option value="executive">👔 Executive Summary</option>
+                    <option value="educational">🎓 Deep Study Guide</option>
+                    <option value="actionable">🎯 Action Item Tasks</option>
+                </select>
                 <button 
                     id="submitBtn" 
                     onclick="generateSummary()" 
-                    class="glow-hover px-6 py-3.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-lg shadow-blue-600/20 transition-all duration-200 whitespace-nowrap"
+                    class="glow-hover px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl shadow-md transition-all whitespace-nowrap"
                 >
                     Generate Summary
                 </button>
             </div>
-        </div>
 
-        <div id="loader" class="hidden mt-12 text-center space-y-4">
-            <div class="inline-block w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
-            <p class="text-sm text-slate-400 animate-pulse font-medium">
-                Extracting transcript layers and rendering interactive map canvas structures...
+        </div>
+    </header>
+
+    <!-- Main Workspace Container Grid Wrapper Display Layout -->
+    <main class="w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-8 flex flex-col items-center">
+        
+        <!-- Welcome Hero/Instruction Callout State Header Box -->
+        <div id="welcomeHero" class="text-center my-12 max-w-xl">
+            <h2 class="text-xl sm:text-2xl font-bold mb-3 text-slate-200">Transform Long Streams into Immediate Visual Node Maps</h2>
+            <p class="text-sm text-slate-400 leading-relaxed">
+                Provide any chronological YouTube watch link in the top bar engine interface above to extract high-density structural outlines and deep markdown notes instantly.
             </p>
         </div>
 
-        <div id="resultBox" class="hidden mt-10 border-t border-slate-800 pt-8">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-slate-200 flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                    AI High-Density Intelligence Summary
-                </h3>
-                <button 
-                    onclick="navigator.clipboard.writeText(document.getElementById('resultText').innerText); alert('Copied to clipboard!')"
-                    class="text-xs text-slate-400 hover:text-white px-2.5 py-1.5 rounded-md bg-slate-800 border border-slate-700 transition-all"
-                >
-                    Copy Output
-                </button>
-            </div>
+        <div id="loader" class="hidden my-16 text-center space-y-4">
+            <div class="inline-block w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+            <p class="text-sm text-slate-400 animate-pulse font-medium">
+                Parsing video scripts and calculating structural map node coordinates...
+            </p>
+        </div>
+
+        <!-- Dynamic Summary + Diagram Interface Output Area Card Panel -->
+        <div id="resultBox" class="hidden w-full space-y-8 animate-fadeIn">
             
-            <div class="bg-slate-950/50 border border-slate-800 rounded-xl p-5 sm:p-6 custom-scroll overflow-y-auto max-h-[600px] mb-6">
-                <div id="resultText" class="markdown-body text-sm sm:text-base text-slate-300"></div>
+            <div class="glass-card rounded-2xl shadow-xl p-6 sm:p-8">
+                <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
+                    <h3 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        AI High-Density Intelligence Summary
+                    </h3>
+                    <button 
+                        onclick="navigator.clipboard.writeText(document.getElementById('resultText').innerText); alert('Copied to clipboard!')"
+                        class="text-xs text-slate-400 hover:text-white px-2.5 py-1.5 rounded-md bg-slate-800 border border-slate-700 transition-all"
+                    >
+                        Copy Output
+                    </button>
+                </div>
+                
+                <div class="custom-scroll overflow-y-auto max-h-[550px]">
+                    <div id="resultText" class="markdown-body text-sm sm:text-base text-slate-300"></div>
+                </div>
             </div>
 
-            <div class="border-t border-slate-800 pt-6">
-                <h3 class="text-md font-bold text-slate-300 mb-3 flex items-center gap-2">
+            <div class="glass-card rounded-2xl shadow-xl p-6 sm:p-8">
+                <h3 class="text-md font-bold text-slate-300 mb-4 flex items-center gap-2">
                     🧠 Interactive Learning Mind Map Node Chart
                 </h3>
                 <div class="markmap-container">
                     <svg id="mindmapCanvas" class="markmap-svg"></svg>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 px-2">
-        <div class="glass-card rounded-xl p-5 border border-slate-800 bg-slate-900/40">
-            <div class="text-blue-500 font-bold text-xl mb-2">10+ Key Dimensions</div>
-            <p class="text-xs text-slate-400 leading-relaxed">Extract deep executive narratives, complex educational notes, or checklist step metrics rather than standard text summary fragments.</p>
         </div>
-        <div class="glass-card rounded-xl p-5 border border-slate-800 bg-slate-900/40">
-            <div class="text-emerald-500 font-bold text-xl mb-2">Interactive Maps</div>
-            <p class="text-xs text-slate-400 leading-relaxed">Transform massive streaming timelines directly into visual graphical topologies built natively for visual mapping structures.</p>
-        </div>
-        <div class="glass-card rounded-xl p-5 border border-slate-800 bg-slate-900/40">
-            <div class="text-purple-500 font-bold text-xl mb-2">100+ Languages</div>
-            <p class="text-xs text-slate-400 leading-relaxed">Integrated multilingual structural support models read and process core text variations perfectly with smart translation engines.</p>
-        </div>
-    </div>
 
-    <div class="w-full max-w-4xl mt-10 border-t border-slate-800 pt-8 mb-16 px-2">
-        <h2 class="text-xl font-bold text-center text-slate-200 mb-6">Frequently Asked Questions</h2>
-        <div class="space-y-3">
-            <details class="glass-card rounded-xl p-4 border border-slate-800 cursor-pointer group">
-                <summary class="font-medium text-sm sm:text-base text-slate-200 list-none flex justify-between items-center group-open:text-blue-400">
-                    <span>Can it recognize multiple speakers inside a video stream?</span>
-                    <span class="transition-transform group-open:rotate-180 text-xs">▼</span>
-                </summary>
-                <p class="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed">The processing layer uses localized adaptive structures to split chronology every 120 seconds into high-density conceptual timeline blocks.</p>
-            </details>
-            <details class="glass-card rounded-xl p-4 border border-slate-800 cursor-pointer group">
-                <summary class="font-medium text-sm sm:text-base text-slate-200 list-none flex justify-between items-center group-open:text-blue-400">
-                    <span>Is this platform completely free to use without logging in?</span>
-                    <span class="transition-transform group-open:rotate-180 text-xs">▼</span>
-                </summary>
-                <p class="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed">Yes! SummAI.yt is open and accessible online with no sign-ups, subscriptions, or credit cards required.</p>
-            </details>
+        <!-- Core Features Highlighting Badges Row Component Matrix Container Grid Grid System -->
+        <div class="w-full grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+            <div class="glass-card rounded-xl p-5 border border-slate-800 bg-slate-900/20">
+                <div class="text-blue-500 font-bold text-base mb-2">10+ Key Dimensions</div>
+                <p class="text-xs text-slate-400 leading-relaxed">Extract deep summaries structured specifically for corporate timelines, educational study guides, or direct tasks.</p>
+            </div>
+            <div class="glass-card rounded-xl p-5 border border-slate-800 bg-slate-900/20">
+                <div class="text-emerald-500 font-bold text-base mb-2">Interactive Node Graphs</div>
+                <p class="text-xs text-slate-400 leading-relaxed">Interact dynamically with nested graphical topologies created naturally using client rendering engines.</p>
+            </div>
+            <div class="glass-card rounded-xl p-5 border border-slate-800 bg-slate-900/20">
+                <div class="text-purple-500 font-bold text-base mb-2">100+ Languages</div>
+                <p class="text-xs text-slate-400 leading-relaxed">Integrated structural localization modules automatically translate and outline multi-dialect video streams seamlessly.</p>
+            </div>
         </div>
-    </div>
+
+    </main>
 
     <script>
         let currentMarkmapInstance = null;
@@ -171,6 +165,7 @@
             const loader = document.getElementById('loader');
             const resultBox = document.getElementById('resultBox');
             const resultText = document.getElementById('resultText');
+            const welcomeHero = document.getElementById('welcomeHero');
 
             if (!urlInput) {
                 alert('Please provide a valid YouTube link.');
@@ -180,6 +175,7 @@
             submitBtn.disabled = true;
             loader.classList.remove('hidden');
             resultBox.classList.add('hidden');
+            welcomeHero.classList.add('hidden');
 
             const API_URL = "https://videosummarizer-rdw7.onrender.com/api/v1/summarize";
 
@@ -208,7 +204,6 @@
                     resultText.innerHTML = marked.parse(displayMarkdown);
                     resultBox.classList.remove('hidden');
 
-                    // Fire up the Markmap interactive engine view wrapper on the SVG element canvas
                     setTimeout(() => {
                         try {
                             const { Transformer, Markmap } = window.markmap;
@@ -216,7 +211,7 @@
                             const { root } = transformer.transform(mindmapMarkdown);
                             
                             const svgEl = document.getElementById('mindmapCanvas');
-                            svgEl.innerHTML = ''; // Wipe previous map lines
+                            svgEl.innerHTML = ''; 
 
                             if (currentMarkmapInstance) {
                                 currentMarkmapInstance.destroy();
