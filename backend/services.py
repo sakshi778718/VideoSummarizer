@@ -1,4 +1,6 @@
-import os
+
+            
+    import os
 import re
 from fastapi import HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -27,32 +29,34 @@ class YouTubeLLMService:
         return f"{mins:02d}:{secs:02d}"
 
     def get_formatted_transcript(self, video_id: str) -> str:
-        """Fetches transcripts using standard class methods with direct cookie file paths to break data center bans."""
+        """Fetches video transcripts using correct object instance methods to avoid attribute loss."""
         transcript_list = None
         errors = []
         
         # Resolve absolute path to backend/youtube_cookies.txt
         current_dir = os.path.dirname(os.path.abspath(__file__))
         cookies_path = os.path.join(current_dir, "youtube_cookies.txt")
-        has_cookies = os.path.exists(cookies_path)
+        cookies_file = cookies_path if os.path.exists(cookies_path) else None
 
-        # Strategy 1: Direct native fetch parameter using absolute string path
+        # Instantiate the API client object to support modern package specifications
+        yt_api = YouTubeTranscriptApi()
+
+        # Strategy 1: Direct instance fetch call passing cookies file path
         try:
-            if has_cookies:
-                # The library reads the text file internally and injects it into its own network agent
-                transcript_list = YouTubeTranscriptApi.get_transcript(video_id, cookies=cookies_path)
+            if cookies_file:
+                transcript_list = yt_api.fetch(video_id, cookies=cookies_file)
             else:
-                transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'hi'])
+                transcript_list = yt_api.fetch(video_id, languages=['en', 'hi'])
         except Exception as e:
-            errors.append(f"Primary fetch path blocked: {str(e)}")
+            errors.append(f"Instance fetch path failed: {str(e)}")
 
-        # Strategy 2: Native list_transcripts fallback method using absolute string path
+        # Strategy 2: Instance list enumeration fallback method
         if not transcript_list:
             try:
-                if has_cookies:
-                    retrieved_list = YouTubeTranscriptApi.list_transcripts(video_id, cookies=cookies_path)
+                if cookies_file:
+                    retrieved_list = yt_api.list(video_id, cookies=cookies_file)
                 else:
-                    retrieved_list = YouTubeTranscriptApi.list_transcripts(video_id)
+                    retrieved_list = yt_api.list(video_id)
                     
                 try:
                     transcript_obj = retrieved_list.find_transcript(['en', 'hi', 'es'])
@@ -61,14 +65,14 @@ class YouTubeLLMService:
                     
                 transcript_list = transcript_obj.fetch()
             except Exception as e:
-                errors.append(f"Adaptive fallback list path blocked: {str(e)}")
+                errors.append(f"Instance list fallback failed: {str(e)}")
 
         # Final Exception Guard
         if not transcript_list:
             error_details = " | ".join(errors)
             raise HTTPException(
                 status_code=422, 
-                detail=f"Transcript engine exhausted all structural methods. Cloud IP might be blocked or cookies expired. Details: {error_details}"
+                detail=f"Transcript engine exhausted all structural instance methods. Details: {error_details}"
             )
 
         # Process parsed text chunks chronologically
